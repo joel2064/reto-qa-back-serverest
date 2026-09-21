@@ -1,0 +1,41 @@
+name: CI
+
+# Corre la suite de pruebas de API (Karate) en cada push a main y en cada PR.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Cancela corridas anteriores del mismo branch/PR si llega un push nuevo.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api-tests:
+    name: API Tests (Karate)
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v5
+
+      - name: Configurar JDK 11 (Temurin)
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '11'
+          cache: maven
+
+      - name: Ejecutar suite de pruebas (Karate)
+        run: mvn -B --no-transfer-progress test
+
+      # Sube el reporte SIEMPRE (incluso si las pruebas fallan): es cuando más
+      # sirve para diagnosticar. Reporte navegable en karate-summary.html.
+      - name: Publicar reporte de Karate como artifact
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: karate-reports
+          path: target/karate-reports/
+          retention-days: 30
