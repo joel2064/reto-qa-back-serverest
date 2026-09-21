@@ -8,10 +8,10 @@ function fn() {
     var config = {
         env: env,
         baseUrl: 'https://serverest.dev',
-        credentials: {
-            email: 'fulano@qa.com',
-            password: 'teste'
-        }
+        // 'credentials' y 'token' se completan más abajo con un usuario efímero
+        // registrado en cada corrida (ver helpers/get-token.feature).
+        credentials: null,
+        token: null
     };
 
     // Utilidad de generación de datos de prueba, disponible en todos los features
@@ -27,6 +27,9 @@ function fn() {
 
     var authResult = karate.callSingle('classpath:helpers/get-token.feature', config);
     config.token = authResult.authToken;
+    // El helper registra un usuario efímero: reusamos SUS credenciales para que
+    // el escenario de login exitoso (que usa 'credentials') también sea válido.
+    config.credentials = { email: authResult.email, password: authResult.password };
 
     karate.configure('connectTimeout', 10000);
     karate.configure('readTimeout', 10000);
